@@ -21,9 +21,14 @@ System_Boundary(abs_b, "АБС") {
   ContainerDb(abs_db, "БД АБС", "Oracle", "Счета, договоры, бухгалтерия. Перегружена")
 }
 
-Container(int, "Сервис интеграции с АБС", "Java Spring, новый", "Единственный путь в АБС: вызовы процедур, идемпотентность, буфер")
+Container_Boundary(int_b, "Сервис интеграции с АБС") {
+  Container(int, "Обработчик заявок", "Java Spring, новый", "Единственный путь в АБС: вызовы процедур, ограничитель потока, идемпотентность")
+  ContainerDb(outbox, "Очередь и outbox", "PostgreSQL, новая", "Состояния NEW, SENT, CONFIRMED, PARKED, события статусов")
+  ContainerDb(parking, "Парковка", "PostgreSQL, новая", "Заявки на ручной разбор и повтор")
+}
+
 Container(rate, "Сервис ставок", "Java Spring, новый", "Расчёт по расписанию, API для каналов, выгрузка файлов")
-ContainerDb(ratedb, "БД ставок", "MS SQL", "Ставки по продуктам, персональные ставки, история")
+ContainerDb(ratedb, "БД ставок", "PostgreSQL", "Ставки по продуктам, персональные ставки, история")
 
 System_Ext(site, "Сайт", "PHP + React. Принимает заявку на депозит")
 System_Ext(cc, "Система колл-центра", "React + Spring, платформа подрядчика")
@@ -40,6 +45,8 @@ Rel(web, core, "Платежи")
 Rel(dep, dbib, "Читает и пишет заявки")
 Rel(dep, rate, "Запрашивает ставки", "REST")
 Rel(dep, int, "Отправляет заявку", "REST")
+Rel(int, outbox, "Пишет заявку и событие")
+Rel(int, parking, "Отправляет на разбор")
 Rel(int, abs_logic, "Вызывает процедуры, получает статус")
 Rel(int, sms, "Просит отправить СМС")
 Rel(rate, ratedb, "Читает и пишет ставки")
